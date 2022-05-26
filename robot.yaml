@@ -1,0 +1,12 @@
+tasks:
+  Gestione Comunicazioni:
+    robotTaskName: Gestione Comunicazioni
+
+condaConfigFile: conda.yaml
+artifactsDir: output
+PATH:
+  - .
+PYTHONPATH:
+  - .
+ignoreFiles:
+  - .gitignore
