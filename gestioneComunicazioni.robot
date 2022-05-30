@@ -1,10 +1,15 @@
 *** Settings ***
 Resource    ../common/common.robot
+Library     Collections
 #Library    RPA.Browser.Selenium    auto_close=${FALSE}
 
 
 *** Variables ***
 ${activity_number_in_page}      300
+@{MANAGED_CATEGORY}             CAMBIO MAIL POSTALIZZAZIONE
+...                             CAMBIO FREQUENZA PAGAMENTO
+...                             CAMBIO INDIRIZZO INTESTATARIO FATTURA
+...                             CAMBIO MODALITA PAGAMENTO
 
 
 *** Tasks ***
@@ -58,6 +63,11 @@ Manage comunicazione
     ${categoria}    Retrieve categoria    ${index}
     Log    Categoria: ${categoria}
     #Log To Console    id: ${index} Categoria: ${categoria}
+    TRY
+        List Should Contain Value    ${MANAGED_CATEGORY}    ${categoria}
+    EXCEPT    .*does not contain value.*    type=regexp
+        Log To Console    Categoria: ${categoria} is not managed
+    END
 
 Retrieve categoria
     [Arguments]    ${index}
