@@ -1,5 +1,6 @@
 *** Settings ***
 Resource    ../common/common.robot
+#Library    RPA.Browser.Selenium    auto_close=${FALSE}
 
 
 *** Variables ***
@@ -10,8 +11,8 @@ ${activity_number_in_page}      300
 Gestione Comunicazioni
     Access enErp software
     Open Attivita Assegnato a Operatore
-    Put all activities inside one page and reload
-    Iterate over activities and manage it
+    Put all comunicazioni inside one page
+    Iterate over comunicazioni and manage
 
 
 *** Keywords ***
@@ -25,27 +26,41 @@ Open Attivita Assegnato a Operatore
     Click Element When Visible    xpath=//*[@id="menu"]/div[3]/ul/li[3]/a
     Click Element When Visible    xpath=//*[@id="id_75"]/ul/li[2]/a
 
-Put all activities inside one page and reload
+Put all comunicazioni inside one page
     Wait Until Element Is Visible    //*[@id="com_pagina_ATTOP"]
     Input Text    //*[@id="com_pagina_ATTOP"]    ${activity_number_in_page}
     Click Button    //*[@id="listaAziende2"]/tfoot/tr/td/input[7]
+    Wait Until Element Is Visible    //*[@id="listaAziende2"]
 
-Iterate over activities and manage it
-    # iterate over activities
+Iterate over comunicazioni and manage
+    # iterate over comunicazioni
     FOR    ${index}    IN RANGE    1    ${activity_number_in_page}
-        ${xpath_activity_to_check}    Set Variable
-        ...    /html/body/div[2]/div[5]/div[3]/div/div/div[2]/form/table/tbody/tr[${index}]
-        ${exists_another_activity}    RPA.Browser.Selenium.Is Element Visible    xpath=${xpath_activity_to_check}
-        IF    ${exists_another_activity}
-            Log    Activities number ${index}
+        ${exists_another_comunicazione}    Check if exists another comunicazione    ${index}
+        IF    ${exists_another_comunicazione}
+            Log    Activity number ${index}
+            Manage comunicazione    ${index}
+
         ELSE
             BREAK
         END
     END
 
-#Check if exists another activity
-#    [Arguments]    ${index}
-#    ${xpath_row_to_check}    Set Variable
-#    ...    /html/body/div[2]/div[5]/div[3]/div/div/div[2]/form/table/tbody/tr[${index}]
-#    ${exists}    RPA.Browser.Selenium.Is Element Visible    xpath=${xpath_row_to_check}
-#    RETURN    ${exists}
+Check if exists another comunicazione
+    [Arguments]    ${index}
+    ${xpath_comunicazione_to_check}    Set Variable
+    ...    /html/body/div[2]/div[5]/div[3]/div/div/div[2]/form/table/tbody/tr[${index}]
+    ${exists}    RPA.Browser.Selenium.Is Element Visible    xpath=${xpath_comunicazione_to_check}
+    RETURN    ${exists}
+
+Manage comunicazione
+    [Arguments]    ${index}
+    # retrieve categoria
+    ${categoria}    Retrieve categoria    ${index}
+    Log    Categoria: ${categoria}
+    #Log To Console    id: ${index} Categoria: ${categoria}
+
+Retrieve categoria
+    [Arguments]    ${index}
+    ${categoria}    RPA.Browser.Selenium.Get Text
+    ...    xpath=/html/body/div[2]/div[5]/div[3]/div/div/div[2]/form/table/tbody/tr[${index}]/td[7]
+    RETURN    ${categoria}
