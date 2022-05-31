@@ -6,22 +6,22 @@ Library     String
 
 
 *** Variables ***
-${activity_number_in_page}                                  300
-@{MANAGED_CATEGORY}                                         cambio mail postalizzazione
-...                                                         cambio frequenza pagamento
-...                                                         cambio indirizzo intestatario fattura
-...                                                         cambio modalita pagamento
-...                                                         rid ko
+${activity_number_in_page}      300
+@{MANAGED_CATEGORY}             cambio mail postalizzazione
+...                             cambio frequenza pagamento
+...                             cambio indirizzo intestatario fattura
+...                             cambio modalita pagamento
+#...    rid ko
 
-${COMMON_OPTIONAL_FIELD_FORNITURA}                          fornitura
-@{MANDATORY_FIELD_CAMBIO_MAIL_POSTALIZZAZIONE}              email
-@{MANDATORY_FIELD_CAMBIO_FREQUENZA_PAGAMENTO}               frequenza
-@{MANDATORY_FIELD_CAMBIO_INDIRIZZO_INTESTATARIO_FATTURA}    email
-@{MANDATORY_FIELD_CAMBIO_MODALITA_PAGAMENTO}                email
-&{DICTIONARY}                                               cambio mail postalizzazione=@{MANDATORY_FIELD_CAMBIO_MAIL_POSTALIZZAZIONE}
-...                                                         cambio frequenza pagamento=@{MANDATORY_FIELD_CAMBIO_FREQUENZA_PAGAMENTO}
-...                                                         cambio indirizzo intestatario fattura=@{MANDATORY_FIELD_CAMBIO_INDIRIZZO_INTESTATARIO_FATTURA}
-...                                                         cambio modalita pagamento=@{MANDATORY_FIELD_CAMBIO_MODALITA_PAGAMENTO}
+#${COMMON_OPTIONAL_FIELD_FORNITURA}    fornitura
+#@{MANDATORY_FIELD_CAMBIO_MAIL_POSTALIZZAZIONE}    email
+#@{MANDATORY_FIELD_CAMBIO_FREQUENZA_PAGAMENTO}    frequenza
+#@{MANDATORY_FIELD_CAMBIO_INDIRIZZO_INTESTATARIO_FATTURA}    email
+#@{MANDATORY_FIELD_CAMBIO_MODALITA_PAGAMENTO}    email
+#&{DICTIONARY}    cambio mail postalizzazione=@{MANDATORY_FIELD_CAMBIO_MAIL_POSTALIZZAZIONE}
+#...    cambio frequenza pagamento=@{MANDATORY_FIELD_CAMBIO_FREQUENZA_PAGAMENTO}
+#...    cambio indirizzo intestatario fattura=@{MANDATORY_FIELD_CAMBIO_INDIRIZZO_INTESTATARIO_FATTURA}
+#...    cambio modalita pagamento=@{MANDATORY_FIELD_CAMBIO_MODALITA_PAGAMENTO}
 
 
 *** Tasks ***
@@ -72,12 +72,11 @@ Iterate over comunicazioni and manage
                 #    1. check sulle informazioni obbligatorie in base alla categoria
                 #    2. se tutte le informazioni sono presenti esegui altrimenti log e continue
                 #    3. mapping tra categoria e funzione da eseguire (la funzione si controlla le info?)
-                #    4. se tutto è andato correttamente chiudere segnalazione
                 #
                 ############
                 ${comunicazione_is_managed_correctly}    Manage comunicazione    ${categoria}
                 IF    ${comunicazione_is_managed_correctly}
-                    # chiudi segnalazione
+                    #    4. se tutto è andato correttamente chiudere segnalazione
                     # vedere se bisogna ricaricare pagina o fare altro
                     Log    ok
                 ELSE
@@ -135,15 +134,23 @@ Retrieve information from comunicazione
 Manage comunicazione
     [Arguments]    ${categoria}
     # return true o false se la gestione è andata a buon fine o meno
+    ${is_correctly_managed}    Set Variable    True
     IF    ${categoria} == cambio mail postalizzazione
         Cambio mail postalizzazione
+        #RETURN TRUE
     ELSE IF    ${categoria} == cambio frequenza pagamento
         Cambio frequenza pagamento
+        #RETURN TRUE
     ELSE IF    ${categoria} == cambio indirizzo intestatario fattura
         Cambio indirizzo intestatario fattura
+        #RETURN TRUE
     ELSE IF    ${categoria} == cambio modalita pagamento
         Cambio modalita pagamento
+        #RETURN TRUE
+    ELSE
+        ${is_correctly_managed}    Set Variable    False
     END
+    RETURN    ${is_correctly_managed}
 
 Cambio mail postalizzazione
     #[Arguments]    ${oggetto}
