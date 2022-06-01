@@ -13,16 +13,6 @@ ${activity_number_in_page}      300
 ...                             cambio modalita pagamento
 #...    rid ko
 
-#${COMMON_OPTIONAL_FIELD_FORNITURA}    fornitura
-#@{MANDATORY_FIELD_CAMBIO_MAIL_POSTALIZZAZIONE}    email
-#@{MANDATORY_FIELD_CAMBIO_FREQUENZA_PAGAMENTO}    frequenza
-#@{MANDATORY_FIELD_CAMBIO_INDIRIZZO_INTESTATARIO_FATTURA}    email
-#@{MANDATORY_FIELD_CAMBIO_MODALITA_PAGAMENTO}    email
-#&{DICTIONARY}    cambio mail postalizzazione=@{MANDATORY_FIELD_CAMBIO_MAIL_POSTALIZZAZIONE}
-#...    cambio frequenza pagamento=@{MANDATORY_FIELD_CAMBIO_FREQUENZA_PAGAMENTO}
-#...    cambio indirizzo intestatario fattura=@{MANDATORY_FIELD_CAMBIO_INDIRIZZO_INTESTATARIO_FATTURA}
-#...    cambio modalita pagamento=@{MANDATORY_FIELD_CAMBIO_MODALITA_PAGAMENTO}
-
 
 *** Tasks ***
 Gestione Comunicazioni
@@ -199,19 +189,49 @@ Cambio mail postalizzazione
 
 Cambio frequenza pagamento
     [Arguments]    ${cliente}    ${cf}    ${oggetto}
-    @{res}    Split String    ${oggetto}
+    #TODO example object    fornitura:EE email:pippo@example.com
+    #    1. check campi obbligatori
+    #    2. if i campi sono ok, prosegui, altrimenti log e return false
+    ############    TODO LIST    ################
+    #    Manage comunicazione    ${categoria}
+    #    1. check sulle informazioni obbligatorie in base alla categoria
+    #    2. se tutte le informazioni sono presenti esegui altrimenti log e continue
+    #    3. mapping tra categoria e funzione da eseguire (la funzione si controlla le info?)
+    #
+    ############    TODO LIST    ################
+    #return true if ok else false
     #TODO
     RETURN    True
 
 Cambio indirizzo intestatario fattura
     [Arguments]    ${cliente}    ${cf}    ${oggetto}
-    @{res}    Split String    ${oggetto}
+    #TODO example object    fornitura:EE email:pippo@example.com
+    #    1. check campi obbligatori
+    #    2. if i campi sono ok, prosegui, altrimenti log e return false
+    ############    TODO LIST    ################
+    #    Manage comunicazione    ${categoria}
+    #    1. check sulle informazioni obbligatorie in base alla categoria
+    #    2. se tutte le informazioni sono presenti esegui altrimenti log e continue
+    #    3. mapping tra categoria e funzione da eseguire (la funzione si controlla le info?)
+    #
+    ############    TODO LIST    ################
+    #return true if ok else false
     #TODO
     RETURN    True
 
 Cambio modalita pagamento
     [Arguments]    ${cliente}    ${cf}    ${oggetto}
-    @{res}    Split String    ${oggetto}
+    #TODO example object    fornitura:EE email:pippo@example.com
+    #    1. check campi obbligatori
+    #    2. if i campi sono ok, prosegui, altrimenti log e return false
+    ############    TODO LIST    ################
+    #    Manage comunicazione    ${categoria}
+    #    1. check sulle informazioni obbligatorie in base alla categoria
+    #    2. se tutte le informazioni sono presenti esegui altrimenti log e continue
+    #    3. mapping tra categoria e funzione da eseguire (la funzione si controlla le info?)
+    #
+    ############    TODO LIST    ################
+    #return true if ok else false
     #TODO
     RETURN    True
 
