@@ -170,10 +170,8 @@ Cambio mail postalizzazione
     #
     ############    TODO LIST    ################
     #return true if ok else false
-    @{fields}    Split String    ${oggetto}
-    &{fields_dict}    Create Dictionary
-    FOR    ${field}    IN    @{fields}
-    END
+    &{fields_key_pairs}    Create dictionary with fields    ${oggetto}
+
     # crea un dictionary
     Check if mandatory fields are in the object
     IF    ${var1} == ${var1}
@@ -201,3 +199,13 @@ Cambio modalita pagamento
     @{res}    Split String    ${oggetto}
     #TODO
     RETURN    True
+
+Create dictionary with fields
+    [Arguments]    ${oggetto}
+    @{fields}    Split String    ${oggetto}
+    &{fields_dict}    Create Dictionary
+    FOR    ${field}    IN    @{fields}
+        @{key_value}    Split String    ${field}    separator=:
+        Set To Dictionary    ${fields_dict}    ${key_value}[0]    ${key_value}[1]
+    END
+    RETURN    ${fields_dict}
