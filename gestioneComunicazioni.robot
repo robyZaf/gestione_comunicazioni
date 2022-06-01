@@ -51,116 +51,153 @@ Put all comunicazioni inside one page
 
 Iterate over comunicazioni and manage
     # iterate over comunicazioni
-    FOR    ${index}    IN RANGE    1    ${activity_number_in_page}
-        ${exists_another_comunicazione}    Check if exists another comunicazione    ${index}
+    FOR    ${index_comunicazione}    IN RANGE    1    ${activity_number_in_page}
+        ${exists_another_comunicazione}    Check if exists another comunicazione    ${index_comunicazione}
         IF    ${exists_another_comunicazione}
-            Log    Activity number ${index}
+            Log    Activity number ${index_comunicazione}
 
-            ${categoria}    Retrieve categoria from comunicazione    ${index}
-            Log    Categoria: ${categoria}
-            #Log To Console    id: ${index} Categoria: ${categoria}
-
-            ${categoria_is_managed}    Check if categoria is managed    ${categoria}
-            IF    ${categoria_is_managed}
-                Log    Categoria: ${categoria}
-
-                ${cliente}    ${p_iva}    ${cf}    ${oggetto}    Retrieve information from comunicazione
-                ...    ${index}
-                Log    Nome cliente: ${cliente} P. iva: ${p_iva} CF: ${cf} Oggetto: ${oggetto}
-                ############
-                #    Manage comunicazione    ${categoria}
-                #    1. check sulle informazioni obbligatorie in base alla categoria
-                #    2. se tutte le informazioni sono presenti esegui altrimenti log e continue
-                #    3. mapping tra categoria e funzione da eseguire (la funzione si controlla le info?)
-                #
-                ############
-                ${comunicazione_is_managed_correctly}    Manage comunicazione    ${categoria}
-                IF    ${comunicazione_is_managed_correctly}
-                    #    4. se tutto è andato correttamente chiudere segnalazione
-                    # vedere se bisogna ricaricare pagina o fare altro
-                    Log    ok
-                ELSE
-                    CONTINUE
-                END
+            ${comunicazione_is_managed_correctly}    Manage comunicazione    ${index_comunicazione}
+            IF    ${comunicazione_is_managed_correctly}
+                Log    OK, Activity number ${index_comunicazione} managed
+                #    1. se tutto è andato correttamente chiudere segnalazione
+                #    2. vedere se bisogna ricaricare pagina o fare altro dopo chiusura segnalazione
             ELSE
                 CONTINUE
             END
-
         ELSE
             BREAK
         END
     END
 
 Check if exists another comunicazione
-    [Arguments]    ${index}
+    [Arguments]    ${index_comunicazione}
     ${xpath_comunicazione_to_check}    Set Variable
-    ...    /html/body/div[2]/div[5]/div[3]/div/div/div[2]/form/table/tbody/tr[${index}]
+    ...    /html/body/div[2]/div[5]/div[3]/div/div/div[2]/form/table/tbody/tr[${index_comunicazione}]
     ${exists}    RPA.Browser.Selenium.Is Element Visible    xpath=${xpath_comunicazione_to_check}
     RETURN    ${exists}
 
+#Check if categoria is managed
+#    [Arguments]    ${categoria}
+#    TRY
+#    List Should Contain Value    ${MANAGED_CATEGORY}    ${categoria}
+#    RETURN    True
+#    EXCEPT    .*does not contain value.*    type=regexp
+#    Log    Categoria: ${categoria} is not managed
+#    RETURN    False
+#    #Log To Console    Categoria: ${categoria} is not managed
+#    END
+
+Manage comunicazione
+    [Arguments]    ${index_comunicazione}
+
+    ${categoria}    Retrieve categoria from comunicazione    ${index_comunicazione}
+    Log    Categoria: ${categoria}
+    #Log To Console    id: ${index_comunicazione} Categoria: ${categoria}
+
+    ${cliente}    ${p_iva}    ${cf}    ${oggetto}    Retrieve information from comunicazione
+    ...    ${index_comunicazione}
+    Log    Nome cliente: ${cliente} P. iva: ${p_iva} CF: ${cf} Oggetto: ${oggetto}
+
+    #${categoria_is_managed}    Check if categoria is managed    ${categoria}
+    #IF    ${categoria_is_managed}
+    #    Log    Categoria: ${categoria}
+    #ELSE
+    #CONTINUE
+    #END
+
+    ${is_comunicazione_correctly_managed}    Set Variable    False
+    IF    "${categoria}" == "cambio mail postalizzazione"
+        ${is_comunicazione_correctly_managed}    Cambio mail postalizzazione
+        ...    ${cliente}
+        ...    ${p_iva}
+        ...    ${cf}
+        ...    ${oggetto}
+    ELSE IF    "${categoria}" == "cambio frequenza pagamento"
+        ${is_comunicazione_correctly_managed}    Cambio frequenza pagamento
+        ...    ${cliente}
+        ...    ${p_iva}
+        ...    ${cf}
+        ...    ${oggetto}
+    ELSE IF    "${categoria}" == "cambio indirizzo intestatario fattura"
+        ${is_comunicazione_correctly_managed}    Cambio indirizzo intestatario fattura
+        ...    ${cliente}
+        ...    ${p_iva}
+        ...    ${cf}
+        ...    ${oggetto}
+    ELSE IF    "${categoria}" == "cambio modalita pagamento"
+        ${is_comunicazione_correctly_managed}    Cambio modalita pagamento
+        ...    ${cliente}
+        ...    ${p_iva}
+        ...    ${cf}
+        ...    ${oggetto}
+    ELSE
+        Log    Categoria: ${categoria} not managed
+    END
+    RETURN    ${is_comunicazione_correctly_managed}
+
 Retrieve categoria from comunicazione
-    [Arguments]    ${index}
+    [Arguments]    ${index_comunicazione}
     ${categoria}    RPA.Browser.Selenium.Get Text
-    ...    xpath=/html/body/div[2]/div[5]/div[3]/div/div/div[2]/form/table/tbody/tr[${index}]/td[7]
+    ...    xpath=/html/body/div[2]/div[5]/div[3]/div/div/div[2]/form/table/tbody/tr[${index_comunicazione}]/td[7]
     ${categoria_lower}    Convert To Lower Case    ${categoria}
     RETURN    ${categoria_lower}
 
-Check if categoria is managed
-    [Arguments]    ${categoria}
-    TRY
-        List Should Contain Value    ${MANAGED_CATEGORY}    ${categoria}
-        RETURN    True
-    EXCEPT    .*does not contain value.*    type=regexp
-        Log    Categoria: ${categoria} is not managed
-        RETURN    False
-        #Log To Console    Categoria: ${categoria} is not managed
-    END
-
 Retrieve information from comunicazione
-    [Arguments]    ${index}
+    [Arguments]    ${index_comunicazione}
     # open riferimenti (protocollo richiesta)
-    Click Link    //*[@id="listaAziende2"]/tbody/tr[${index}]/td[8]/div/a
+    Click Link    //*[@id="listaAziende2"]/tbody/tr[${index_comunicazione}]/td[8]/div/a
     # move on new page opened after click
     Switch Window    new
     ${cliente}    RPA.Browser.Selenium.Get Text    //*[@id="pageContent"]/table/tbody/tr[4]/td[2]
     ${p_iva}    RPA.Browser.Selenium.Get Text    //*[@id="pageContent"]/table/tbody/tr[5]/td[2]
     ${cf}    RPA.Browser.Selenium.Get Text    //*[@id="pageContent"]/table/tbody/tr[6]/td[2]
     ${oggetto}    RPA.Browser.Selenium.Get Text    //*[@id="pageContent"]/table/tbody/tr[8]/td[2]
-    # close protocollo window
+    # close window protocollo
     Click Button    //*[@id="btn_close"]
     Switch Window    main
     RETURN    ${cliente}    ${p_iva}    ${cf}    ${oggetto}
 
-Manage comunicazione
-    [Arguments]    ${categoria}
-    # return true o false se la gestione è andata a buon fine o meno
-    ${is_correctly_managed}    Set Variable    True
-    IF    ${categoria} == cambio mail postalizzazione
-        Cambio mail postalizzazione
-        #RETURN TRUE
-    ELSE IF    ${categoria} == cambio frequenza pagamento
-        Cambio frequenza pagamento
-        #RETURN TRUE
-    ELSE IF    ${categoria} == cambio indirizzo intestatario fattura
-        Cambio indirizzo intestatario fattura
-        #RETURN TRUE
-    ELSE IF    ${categoria} == cambio modalita pagamento
-        Cambio modalita pagamento
-        #RETURN TRUE
-    ELSE
-        ${is_correctly_managed}    Set Variable    False
-    END
-    RETURN    ${is_correctly_managed}
-
 Cambio mail postalizzazione
-    #[Arguments]    ${oggetto}
-    #TODO
+    [Arguments]    ${cliente}    ${p_iva}    ${cf}    ${oggetto}
+    #TODO example object    fornitura:EE email:pippo@example.com
+    #    1. check campi obbligatori
+    #    2. if i campi sono ok, prosegui, altrimenti log e return false
+    ############    TODO LIST    ################
+    #    Manage comunicazione    ${categoria}
+    #    1. check sulle informazioni obbligatorie in base alla categoria
+    #    2. se tutte le informazioni sono presenti esegui altrimenti log e continue
+    #    3. mapping tra categoria e funzione da eseguire (la funzione si controlla le info?)
+    #
+    ############    TODO LIST    ################
+    #return true if ok else false
+    @{fields}    Split String    ${oggetto}
+    &{fields_dict}    Create Dictionary
+    FOR    ${field}    IN    @{fields}
+    END
+    # crea un dictionary
+    Check if mandatory fields are in the object
+    IF    ${var1} == ${var1}
+        Call Keyword
+        RETURN    True
+    ELSE
+        Log    Missing required field for categoria: cambio mail postalizzazione
+        RETURN    False
+    END
 
 Cambio frequenza pagamento
+    [Arguments]    ${cliente}    ${p_iva}    ${cf}    ${oggetto}
+    @{res}    Split String    ${oggetto}
     #TODO
+    RETURN    True
 
 Cambio indirizzo intestatario fattura
+    [Arguments]    ${cliente}    ${p_iva}    ${cf}    ${oggetto}
+    @{res}    Split String    ${oggetto}
     #TODO
+    RETURN    True
 
 Cambio modalita pagamento
+    [Arguments]    ${cliente}    ${p_iva}    ${cf}    ${oggetto}
+    @{res}    Split String    ${oggetto}
     #TODO
+    RETURN    True
