@@ -170,17 +170,29 @@ Cambio mail postalizzazione
     #
     ############    TODO LIST    ################
     #return true if ok else false
+
+    # dictionary with field in oggetto
     &{fields_key_pairs}    Create dictionary with fields    ${oggetto}
 
-    # crea un dictionary
-    Check if mandatory fields are in the object
-    IF    ${var1} == ${var1}
-        Call Keyword
-        RETURN    True
-    ELSE
-        Log    Missing required field for categoria: cambio mail postalizzazione
+    # Check if mandatory fields are in the object
+    TRY
+        ${email}    Set Variable    ${fields_key_pairs}[email]
+        ${fornitura}    Set Variable    ${fields_key_pairs}[fornitura]
+        # RETURN    True
+    EXCEPT    Dictionary .* has no key 'email'.    type=regexp
+        Log    Missing required field: email
         RETURN    False
+    EXCEPT    Dictionary .* has no key 'fornitura'.    type=regexp
+        Log    Field fornitura not setted, suppose EE and GAS
     END
+
+    #IF    ${var1} == ${var1}
+    #    Call Keyword
+    #    RETURN    True
+    #ELSE
+    #    Log    Missing required field for categoria: cambio mail postalizzazione
+    #    RETURN    False
+    #END
 
 Cambio frequenza pagamento
     [Arguments]    ${cliente}    ${p_iva}    ${cf}    ${oggetto}
