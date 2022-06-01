@@ -94,10 +94,14 @@ Manage comunicazione
     Log    Categoria: ${categoria}
     #Log To Console    id: ${index_comunicazione} Categoria: ${categoria}
 
-    ${cliente}    ${p_iva}    ${cf}    ${oggetto}    Retrieve information from comunicazione
+    ${cliente}    ${cf}    ${oggetto}    Retrieve information from comunicazione
     ...    ${index_comunicazione}
-    Log    Nome cliente: ${cliente} P. iva: ${p_iva} CF: ${cf} Oggetto: ${oggetto}
+    Log    Nome cliente: ${cliente} CF: ${cf} Oggetto: ${oggetto}
 
+    IF    ${oggetto} == None or len(${oggetto}) == 0
+        Log    Oggetto cannot be empty.
+        RETURN    False
+    END
     #${categoria_is_managed}    Check if categoria is managed    ${categoria}
     #IF    ${categoria_is_managed}
     #    Log    Categoria: ${categoria}
@@ -109,25 +113,21 @@ Manage comunicazione
     IF    "${categoria}" == "cambio mail postalizzazione"
         ${is_comunicazione_correctly_managed}    Cambio mail postalizzazione
         ...    ${cliente}
-        ...    ${p_iva}
         ...    ${cf}
         ...    ${oggetto}
     ELSE IF    "${categoria}" == "cambio frequenza pagamento"
         ${is_comunicazione_correctly_managed}    Cambio frequenza pagamento
         ...    ${cliente}
-        ...    ${p_iva}
         ...    ${cf}
         ...    ${oggetto}
     ELSE IF    "${categoria}" == "cambio indirizzo intestatario fattura"
         ${is_comunicazione_correctly_managed}    Cambio indirizzo intestatario fattura
         ...    ${cliente}
-        ...    ${p_iva}
         ...    ${cf}
         ...    ${oggetto}
     ELSE IF    "${categoria}" == "cambio modalita pagamento"
         ${is_comunicazione_correctly_managed}    Cambio modalita pagamento
         ...    ${cliente}
-        ...    ${p_iva}
         ...    ${cf}
         ...    ${oggetto}
     ELSE
@@ -149,16 +149,15 @@ Retrieve information from comunicazione
     # move on new page opened after click
     Switch Window    new
     ${cliente}    RPA.Browser.Selenium.Get Text    //*[@id="pageContent"]/table/tbody/tr[4]/td[2]
-    ${p_iva}    RPA.Browser.Selenium.Get Text    //*[@id="pageContent"]/table/tbody/tr[5]/td[2]
     ${cf}    RPA.Browser.Selenium.Get Text    //*[@id="pageContent"]/table/tbody/tr[6]/td[2]
     ${oggetto}    RPA.Browser.Selenium.Get Text    //*[@id="pageContent"]/table/tbody/tr[8]/td[2]
     # close window protocollo
     Click Button    //*[@id="btn_close"]
     Switch Window    main
-    RETURN    ${cliente}    ${p_iva}    ${cf}    ${oggetto}
+    RETURN    ${cliente}    ${cf}    ${oggetto}
 
 Cambio mail postalizzazione
-    [Arguments]    ${cliente}    ${p_iva}    ${cf}    ${oggetto}
+    [Arguments]    ${cliente}    ${cf}    ${oggetto}
     #TODO example object    fornitura:EE email:pippo@example.com
     #    1. check campi obbligatori
     #    2. if i campi sono ok, prosegui, altrimenti log e return false
@@ -178,36 +177,40 @@ Cambio mail postalizzazione
     TRY
         ${email}    Set Variable    ${fields_key_pairs}[email]
         ${fornitura}    Set Variable    ${fields_key_pairs}[fornitura]
+
+        # TBD
         # RETURN    True
     EXCEPT    Dictionary .* has no key 'email'.    type=regexp
         Log    Missing required field: email
+        #Log To Console    Missing required field: email
         RETURN    False
     EXCEPT    Dictionary .* has no key 'fornitura'.    type=regexp
         Log    Field fornitura not setted, suppose EE and GAS
+        #Log To Console    Field fornitura not setted, suppose EE and GAS
+        ${fornitura}    Set Variable    ALL
+    EXCEPT
+        Log    Something else went wrong
+        Log To Console    Something else went wrong
+        RETURN    False
     END
 
-    #IF    ${var1} == ${var1}
-    #    Call Keyword
-    #    RETURN    True
-    #ELSE
-    #    Log    Missing required field for categoria: cambio mail postalizzazione
-    #    RETURN    False
-    #END
+    #Log    fornitura: ${fornitura}
+    #Log To Console    fornitura: ${fornitura}
 
 Cambio frequenza pagamento
-    [Arguments]    ${cliente}    ${p_iva}    ${cf}    ${oggetto}
+    [Arguments]    ${cliente}    ${cf}    ${oggetto}
     @{res}    Split String    ${oggetto}
     #TODO
     RETURN    True
 
 Cambio indirizzo intestatario fattura
-    [Arguments]    ${cliente}    ${p_iva}    ${cf}    ${oggetto}
+    [Arguments]    ${cliente}    ${cf}    ${oggetto}
     @{res}    Split String    ${oggetto}
     #TODO
     RETURN    True
 
 Cambio modalita pagamento
-    [Arguments]    ${cliente}    ${p_iva}    ${cf}    ${oggetto}
+    [Arguments]    ${cliente}    ${cf}    ${oggetto}
     @{res}    Split String    ${oggetto}
     #TODO
     RETURN    True
