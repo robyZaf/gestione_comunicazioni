@@ -213,7 +213,14 @@ Cambio mail postalizzazione
             ${xpath_scheda_cliente}    Find cliente corretto    ${cliente}
             # open scheda cliente
             Click Link    ${xpath_scheda_cliente}
-            #
+            # go to Tab Contatti cliente
+            Click Element When Visible    //*[@id="td3"]/span
+            # modify indirizzo email spedizione
+            Click Element When Visible    //*[@id="listaAziende"]/tbody/tr[3]/td[10]/a
+            Switch Window    new
+            Input Text When Element Is Visible    id:EMAIL    ${email}
+            RPA.Browser.Selenium.Press Keys    None    TAB
+            Click Button When Visible    id:salva_modifica_contatto_sped
         ELSE IF    ${fornitura} == GAS
             #Open back office GAS and do operation
             Click Element When Visible    name:BACKOFFICE GAS
