@@ -168,8 +168,7 @@ Create dictionary with fields
 Cambio mail postalizzazione
     [Arguments]    ${cliente}    ${cf}    &{fields_key_pairs}
     #TODO example object    fornitura:EE email:pippo@example.com
-    #    1. check campi obbligatori
-    #    2. if i campi sono ok, prosegui, altrimenti log e return false
+
     ############    TODO LIST    ################
     #    Manage comunicazione    ${categoria}
     #    1. check sulle informazioni obbligatorie in base alla categoria
@@ -177,9 +176,7 @@ Cambio mail postalizzazione
     #    3. mapping tra categoria e funzione da eseguire (la funzione si controlla le info?)
     #
     ############    TODO LIST    ################
-    #return true if ok else false
 
-    # Check if mandatory fields are in the object
     TRY
         ${email}    Set Variable    ${fields_key_pairs}[email]
         ${fornitura}    Set Variable    ${fields_key_pairs}[fornitura]
@@ -201,44 +198,65 @@ Cambio mail postalizzazione
     END
 
     TRY
-        IF    ${fornitura} == EE
-            #Open back office EE and do operation
-            Click Element When Visible    name:BACKOFFICE
-            Click Element When Visible    xpath=//*[@id="menu"]/div[2]/ul/li[2]/a
-            Click Element When Visible    xpath=//*[@id="id_14"]/ul/li[2]/a
-            #filter by CF
-            Select From List By Value    id:filtro_ricerca    CODICE_FISCALE
-            Input Text When Element Is Visible    id:valore_cercato    ${cf}
-            Click Button When Visible    xpath=//*[@id="elencoClienti"]/div/div[1]/input[2]
-            ${xpath_scheda_cliente}    Find cliente corretto    ${cliente}
-            # open scheda cliente
-            Click Link    ${xpath_scheda_cliente}
-            # go to Tab Contatti cliente
-            Click Element When Visible    //*[@id="td3"]/span
-            # modify indirizzo email spedizione
-            Click Element When Visible    //*[@id="listaAziende"]/tbody/tr[3]/td[10]/a
-            Switch Window    new
-            Input Text When Element Is Visible    id:EMAIL    ${email}
-            RPA.Browser.Selenium.Press Keys    None    TAB
-            Click Button When Visible    id:salva_modifica_contatto_sped
-            Switch Window    main
-        ELSE IF    ${fornitura} == GAS
-            #Open back office GAS and do operation
-            Click Element When Visible    name:BACKOFFICE GAS
+        IF    "${fornitura}" == EE
+            Open back office EE
+            Find cliente and change email address    ${cf}    ${cliente}    ${email}
+            ##################
+            #
+            #    HOW TO PROCEED TO RETURN TO LIST OF ACTIVITY?
+            #    manage close of activity on Manage
+            #
+            ##################
+            RETURN    True
+        ELSE IF    "${fornitura}" == GAS
+            Open back office GAS
+            Find cliente and change email address    ${cf}    ${cliente}    ${email}
+            ##################
+            #
+            #    HOW TO PROCEED TO RETURN TO LIST OF ACTIVITY?
+            #    manage close of activity on Manage
+            #
+            ##################
+            RETURN    True
         ELSE
-            #Open back office EE and do operation
-            Click Element When Visible    name:BACKOFFICE
-
-            #Open back office GAS and do operation
-            Click Element When Visible    name:BACKOFFICE GAS
+            Open back office EE
+            Find cliente and change email address    ${cf}    ${cliente}    ${email}
+            Open back office GAS
+            Find cliente and change email address    ${cf}    ${cliente}    ${email}
         END
     EXCEPT
-        Log    Something went wrong
+        Log    Something else went wrong
         RETURN    False
     END
 
-    #Log    fornitura: ${fornitura}
-    #Log To Console    fornitura: ${fornitura}
+Open back office EE
+    Click Element When Visible    name:BACKOFFICE
+    Click Element When Visible    //*[@id="menu"]/div[2]/ul/li[2]/a
+    Click Element When Visible    //*[@id="id_14"]/ul/li[2]/a
+
+Open back office GAS
+    Click Element When Visible    name:BACKOFFICE GAS
+    Click Element When Visible    //*[@id="menu"]/div[4]/ul/li[2]/a
+    Click Element When Visible    //*[@id="id_97"]/ul/li[2]/a
+
+Find cliente and change email address
+    [Arguments]    ${cf}    ${cliente}    ${email}
+    #filter by CF
+    Select From List By Value    id:filtro_ricerca    CODICE_FISCALE
+    Input Text When Element Is Visible    id:valore_cercato    ${cf}
+    Click Button When Visible    xpath=//*[@id="elencoClienti"]/div/div[1]/input[2]
+    ${xpath_scheda_cliente}    Find cliente corretto    ${cliente}
+    # open scheda cliente
+    Click Link    ${xpath_scheda_cliente}
+    # go to Tab Contatti cliente
+    Click Element When Visible    //*[@id="td3"]/span
+    # modify indirizzo email spedizione
+    Click Element When Visible    //*[@id="listaAziende"]/tbody/tr[3]/td[10]/a
+    Switch Window    new
+    Input Text When Element Is Visible    id:EMAIL    ${email}
+    RPA.Browser.Selenium.Press Keys    None    TAB
+    Click Button When Visible    id:salva_modifica_contatto_sped
+    Switch Window    main
 
 Find cliente corretto
     [Arguments]    ${nome_cliente}
