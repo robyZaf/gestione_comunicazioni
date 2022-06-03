@@ -210,7 +210,10 @@ Cambio mail postalizzazione
             Select From List By Value    id:filtro_ricerca    CODICE_FISCALE
             Input Text When Element Is Visible    id:valore_cercato    ${cf}
             Click Button When Visible    xpath=//*[@id="elencoClienti"]/div/div[1]/input[2]
-            ${link_scheda_cliente}    Find cliente corretto    ${cliente}
+            ${xpath_scheda_cliente}    Find cliente corretto    ${cliente}
+            # open scheda cliente
+            Click Link    ${xpath_scheda_cliente}
+            #
         ELSE IF    ${fornitura} == GAS
             #Open back office GAS and do operation
             Click Element When Visible    name:BACKOFFICE GAS
@@ -232,7 +235,16 @@ Cambio mail postalizzazione
 Find cliente corretto
     [Arguments]    ${nome_cliente}
     FOR    ${row_cliente}    IN RANGE    1    ${max_row_to_check_inside_back_office}
-        IF    ${var1} == ${var1}    Call Keyword    ELSE    CO
+        # Log To Console    number: ${row_cliente}
+
+        ${xpath_scheda_cliente}    Set Variable    //*[@id="listaAziendeD"]/tbody/tr[${row_cliente}]/td[1]/a
+        # take ragione sociale
+        ${ragione_sociale}    RPA.Browser.Selenium.Get Text    ${xpath_scheda_cliente}
+        IF    "${ragione_sociale}" == "${nome_cliente}"
+            RETURN    ${xpath_scheda_cliente}
+        ELSE
+            CONTINUE
+        END
     END
 
 Cambio frequenza pagamento
