@@ -9,7 +9,7 @@ Library     String
 ${activity_number_in_page}      300
 @{MANAGED_CATEGORY}             cambio mail postalizzazione
 ...                             cambio frequenza pagamento
-...                             cambio indirizzo intestatario fattura
+...                             anagrafica
 ...                             cambio modalita pagamento
 #...    rid ko
 
@@ -19,7 +19,7 @@ Gestione Comunicazioni
     Access enErp software
     Open Attivita Assegnato a Operatore
     Put all comunicazioni inside one page
-    Iterate over comunicazioni and manage
+    #Iterate over comunicazioni and manage
 
 
 *** Keywords ***
@@ -84,11 +84,16 @@ Manage comunicazione
     Log    Categoria: ${categoria}
     #Log To Console    id: ${index_comunicazione} Categoria: ${categoria}
 
+    IF    "${categoria}" == None or len("${categoria}") == 0
+        Log    Categoria cannot be empty.
+        RETURN    False
+    END
+
     ${cliente}    ${cf}    ${oggetto}    Retrieve information from comunicazione
     ...    ${index_comunicazione}
-    Log    Nome cliente: ${cliente} CF: ${cf} Oggetto: ${oggetto}
+    Log    Cliente: ${cliente} CF: ${cf} Oggetto: ${oggetto}
 
-    IF    ${oggetto} == None or len(${oggetto}) == 0
+    IF    "${oggetto}" == None or len("${oggetto}") == 0
         Log    Oggetto cannot be empty.
         RETURN    False
     END
@@ -99,27 +104,30 @@ Manage comunicazione
     #CONTINUE
     #END
 
+    # dictionary with field in oggetto
+    &{fields_key_pairs}    Create dictionary with fields    ${oggetto}
+
     ${is_comunicazione_correctly_managed}    Set Variable    False
     IF    "${categoria}" == "cambio mail postalizzazione"
         ${is_comunicazione_correctly_managed}    Cambio mail postalizzazione
         ...    ${cliente}
         ...    ${cf}
-        ...    ${oggetto}
+        ...    &{fields_key_pairs}
     ELSE IF    "${categoria}" == "cambio frequenza pagamento"
         ${is_comunicazione_correctly_managed}    Cambio frequenza pagamento
         ...    ${cliente}
         ...    ${cf}
-        ...    ${oggetto}
-    ELSE IF    "${categoria}" == "cambio indirizzo intestatario fattura"
-        ${is_comunicazione_correctly_managed}    Cambio indirizzo intestatario fattura
+        ...    &{fields_key_pairs}
+    ELSE IF    "${categoria}" == "anagrafica"
+        ${is_comunicazione_correctly_managed}    Modifica anagrafica
         ...    ${cliente}
         ...    ${cf}
-        ...    ${oggetto}
+        ...    &{fields_key_pairs}
     ELSE IF    "${categoria}" == "cambio modalita pagamento"
         ${is_comunicazione_correctly_managed}    Cambio modalita pagamento
         ...    ${cliente}
         ...    ${cf}
-        ...    ${oggetto}
+        ...    &{fields_key_pairs}
     ELSE
         Log    Categoria: ${categoria} not managed
     END
@@ -146,8 +154,18 @@ Retrieve information from comunicazione
     Switch Window    main
     RETURN    ${cliente}    ${cf}    ${oggetto}
 
+Create dictionary with fields
+    [Arguments]    ${oggetto}
+    @{fields}    Split String    ${oggetto}
+    &{fields_dict}    Create Dictionary
+    FOR    ${field}    IN    @{fields}
+        @{key_value}    Split String    ${field}    separator=:
+        Set To Dictionary    ${fields_dict}    ${key_value}[0]    ${key_value}[1]
+    END
+    RETURN    ${fields_dict}
+
 Cambio mail postalizzazione
-    [Arguments]    ${cliente}    ${cf}    ${oggetto}
+    [Arguments]    ${cliente}    ${cf}    &{fields_key_pairs}
     #TODO example object    fornitura:EE email:pippo@example.com
     #    1. check campi obbligatori
     #    2. if i campi sono ok, prosegui, altrimenti log e return false
@@ -159,9 +177,6 @@ Cambio mail postalizzazione
     #
     ############    TODO LIST    ################
     #return true if ok else false
-
-    # dictionary with field in oggetto
-    &{fields_key_pairs}    Create dictionary with fields    ${oggetto}
 
     # Check if mandatory fields are in the object
     TRY
@@ -184,6 +199,20 @@ Cambio mail postalizzazione
         RETURN    False
     END
 
+    TRY
+        IF    ${fornitura} == EE
+            Open back office EE
+        ELSE IF    ${fornitura} == GAS
+            Open back office GAS
+        ELSE
+            Open back office EE
+            Open back office GAS
+        END
+    EXCEPT
+        Log    Something went wrong
+        RETURN    False
+    END
+
     #Log    fornitura: ${fornitura}
     #Log To Console    fornitura: ${fornitura}
 
@@ -203,7 +232,7 @@ Cambio frequenza pagamento
     #TODO
     RETURN    True
 
-Cambio indirizzo intestatario fattura
+Modifica anagrafica
     [Arguments]    ${cliente}    ${cf}    ${oggetto}
     #TODO example object    fornitura:EE email:pippo@example.com
     #    1. check campi obbligatori
@@ -234,13 +263,3 @@ Cambio modalita pagamento
     #return true if ok else false
     #TODO
     RETURN    True
-
-Create dictionary with fields
-    [Arguments]    ${oggetto}
-    @{fields}    Split String    ${oggetto}
-    &{fields_dict}    Create Dictionary
-    FOR    ${field}    IN    @{fields}
-        @{key_value}    Split String    ${field}    separator=:
-        Set To Dictionary    ${fields_dict}    ${key_value}[0]    ${key_value}[1]
-    END
-    RETURN    ${fields_dict}
