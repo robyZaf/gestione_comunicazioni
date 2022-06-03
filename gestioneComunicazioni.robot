@@ -6,11 +6,12 @@ Library     String
 
 
 *** Variables ***
-${activity_number_in_page}      300
-@{MANAGED_CATEGORY}             cambio mail postalizzazione
-...                             cambio frequenza pagamento
-...                             anagrafica
-...                             cambio modalita pagamento
+${activity_number_in_page}                  300
+${max_row_to_check_inside_back_office}      50
+@{MANAGED_CATEGORY}                         cambio mail postalizzazione
+...                                         cambio frequenza pagamento
+...                                         anagrafica
+...                                         cambio modalita pagamento
 #...    rid ko
 
 
@@ -201,12 +202,24 @@ Cambio mail postalizzazione
 
     TRY
         IF    ${fornitura} == EE
-            Open back office EE
+            #Open back office EE and do operation
+            Click Element When Visible    name:BACKOFFICE
+            Click Element When Visible    xpath=//*[@id="menu"]/div[2]/ul/li[2]/a
+            Click Element When Visible    xpath=//*[@id="id_14"]/ul/li[2]/a
+            #filter by CF
+            Select From List By Value    id:filtro_ricerca    CODICE_FISCALE
+            Input Text When Element Is Visible    id:valore_cercato    ${cf}
+            Click Button When Visible    xpath=//*[@id="elencoClienti"]/div/div[1]/input[2]
+            ${link_scheda_cliente}    Find cliente corretto    ${cliente}
         ELSE IF    ${fornitura} == GAS
-            Open back office GAS
+            #Open back office GAS and do operation
+            Click Element When Visible    name:BACKOFFICE GAS
         ELSE
-            Open back office EE
-            Open back office GAS
+            #Open back office EE and do operation
+            Click Element When Visible    name:BACKOFFICE
+
+            #Open back office GAS and do operation
+            Click Element When Visible    name:BACKOFFICE GAS
         END
     EXCEPT
         Log    Something went wrong
@@ -215,6 +228,12 @@ Cambio mail postalizzazione
 
     #Log    fornitura: ${fornitura}
     #Log To Console    fornitura: ${fornitura}
+
+Find cliente corretto
+    [Arguments]    ${nome_cliente}
+    FOR    ${row_cliente}    IN RANGE    1    ${max_row_to_check_inside_back_office}
+        IF    ${var1} == ${var1}    Call Keyword    ELSE    CO
+    END
 
 Cambio frequenza pagamento
     [Arguments]    ${cliente}    ${cf}    ${oggetto}
