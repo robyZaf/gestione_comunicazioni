@@ -221,6 +221,7 @@ Cambio mail postalizzazione
             Input Text When Element Is Visible    id:EMAIL    ${email}
             RPA.Browser.Selenium.Press Keys    None    TAB
             Click Button When Visible    id:salva_modifica_contatto_sped
+            Switch Window    main
         ELSE IF    ${fornitura} == GAS
             #Open back office GAS and do operation
             Click Element When Visible    name:BACKOFFICE GAS
