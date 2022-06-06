@@ -35,10 +35,16 @@ Open Attivita Assegnato a Operatore
     Click Element When Visible    xpath=//*[@id="id_75"]/ul/li[2]/a
 
 Put all comunicazioni inside one page
-    Wait Until Element Is Visible    //*[@id="com_pagina_ATTOP"]
-    Input Text    //*[@id="com_pagina_ATTOP"]    ${activity_number_in_page}
-    Click Button    //*[@id="listaAziende2"]/tfoot/tr/td/input[7]
-    Wait Until Element Is Visible    //*[@id="listaAziende2"]
+    ${xpath_number_of_activity_per_page}    Set Variable    //*[@id="com_pagina_ATTOP"]
+    TRY
+        Wait Until Element Is Visible    ${xpath_number_of_activity_per_page}
+        Input Text When Element Is Visible    ${xpath_number_of_activity_per_page}    ${activity_number_in_page}
+        Click Button When Visible    //*[@id="listaAziende2"]/tfoot/tr/td/input[7]
+    EXCEPT    Element '${xpath_number_of_activity_per_page}' not visible after 5 seconds.
+        Log    The activities are in single page
+    FINALLY
+        Wait Until Element Is Visible    //*[@id="listaAziende2"]
+    END
 
 Iterate over comunicazioni and manage
     # iterate over comunicazioni
