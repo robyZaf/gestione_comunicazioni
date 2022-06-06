@@ -334,6 +334,8 @@ Cambio frequenza pagamento
             # open scheda cliente
             Click Link    ${xpath_scheda_cliente}
             Click Element When Visible    //*[@id="td4"]/span
+
+            Find contratto in corso di validita
             #Find cliente and change email address    ${cf}    ${cliente}    ${email}
 
             ##################
@@ -362,6 +364,39 @@ Cambio frequenza pagamento
     EXCEPT
         Log    Something else went wrong
         RETURN    False
+    END
+
+Find contratto in corso di validita
+    #retrieve inizio e fine validita e check se data di oggi è all'interno
+    ${today_date}    Today Dmy
+    FOR    ${contract_row}    IN RANGE    1    ${max_row_to_check_inside_back_office}
+        # Log To Console    number: ${contract_row}
+
+        ${inizio_validita_contratto}    RPA.Browser.Selenium.Get Text
+        ...    //*[@id="listaAziende4"]/tbody/tr[${contract_row}]/td[3]
+        ${fine_validita_contratto}    RPA.Browser.Selenium.Get Text
+        ...    //*[@id="listaAziende4"]/tbody/tr[${contract_row}]/td[4]
+
+        ${contratto_in_corso_validita}    Is Date Include Between
+        ...    ${inizio_validita_contratto}
+        ...    ${fine_validita_contratto}
+        ...    ${today_date}
+        ...    %d/%m/%Y
+
+        IF    ${contratto_in_corso_validita}
+            # return index o xpath to click?
+        ELSE
+            Log    message
+        END
+
+        #${xpath_scheda_cliente}    Set Variable    //*[@id="listaAziendeD"]/tbody/tr[${row_cliente}]/td[1]/a
+        ## take ragione sociale
+        #${ragione_sociale}    RPA.Browser.Selenium.Get Text    ${xpath_scheda_cliente}
+        #IF    "${ragione_sociale}" == "${nome_cliente}"
+        #    RETURN    ${xpath_scheda_cliente}
+        #ELSE
+        #    CONTINUE
+        #END
     END
 
 Modifica anagrafica
