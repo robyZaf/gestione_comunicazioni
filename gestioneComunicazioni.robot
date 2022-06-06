@@ -2,6 +2,7 @@
 Resource    ../common/common.robot
 Library     Collections
 Library     String
+Library     date_util.py
 #Library    RPA.Browser.Selenium    auto_close=${FALSE}
 
 
@@ -104,12 +105,6 @@ Manage comunicazione
         Log    Oggetto cannot be empty.
         RETURN    False
     END
-    #${categoria_is_managed}    Check if categoria is managed    ${categoria}
-    #IF    ${categoria_is_managed}
-    #    Log    Categoria: ${categoria}
-    #ELSE
-    #CONTINUE
-    #END
 
     # dictionary with field in oggetto
     &{fields_key_pairs}    Create dictionary with fields    ${oggetto}
@@ -156,10 +151,11 @@ Retrieve information from comunicazione
     ${cliente}    RPA.Browser.Selenium.Get Text    //*[@id="pageContent"]/table/tbody/tr[4]/td[2]
     ${cf}    RPA.Browser.Selenium.Get Text    //*[@id="pageContent"]/table/tbody/tr[6]/td[2]
     ${oggetto}    RPA.Browser.Selenium.Get Text    //*[@id="pageContent"]/table/tbody/tr[8]/td[2]
+    ${oggetto_lower_case}    Convert To Lower Case    ${oggetto}
     # close window protocollo
     Click Button    //*[@id="btn_close"]
     Switch Window    main
-    RETURN    ${cliente}    ${cf}    ${oggetto}
+    RETURN    ${cliente}    ${cf}    ${oggetto_lower_case}
 
 Create dictionary with fields
     [Arguments]    ${oggetto}
@@ -196,7 +192,7 @@ Cambio mail postalizzazione
     EXCEPT    Dictionary .* has no key 'fornitura'.    type=regexp
         Log    Field fornitura not setted, suppose EE and GAS
         #Log To Console    Field fornitura not setted, suppose EE and GAS
-        ${fornitura}    Set Variable    ALL
+        ${fornitura}    Set Variable    all
     EXCEPT
         Log    Something else went wrong
         Log To Console    Something else went wrong
@@ -204,7 +200,7 @@ Cambio mail postalizzazione
     END
 
     TRY
-        IF    "${fornitura}" == EE
+        IF    "${fornitura}" == "ee"
             Open back office EE
             Find cliente and change email address    ${cf}    ${cliente}    ${email}
             ##################
@@ -214,7 +210,7 @@ Cambio mail postalizzazione
             #
             ##################
             RETURN    True
-        ELSE IF    "${fornitura}" == GAS
+        ELSE IF    "${fornitura}" == "gas"
             Open back office GAS
             Find cliente and change email address    ${cf}    ${cliente}    ${email}
             ##################
@@ -280,10 +276,9 @@ Find cliente corretto
     END
 
 Cambio frequenza pagamento
-    [Arguments]    ${cliente}    ${cf}    ${oggetto}
-    #TODO example object    fornitura:EE email:pippo@example.com
-    #    1. check campi obbligatori
-    #    2. if i campi sono ok, prosegui, altrimenti log e return false
+    [Arguments]    ${cliente}    ${cf}    &{fields_key_pairs}
+    #TODO example object    fornitura:EE frequenza:SCELTA mesi:GEN,MAR,LUG,SET
+
     ############    TODO LIST    ################
     #    Manage comunicazione    ${categoria}
     #    1. check sulle informazioni obbligatorie in base alla categoria
@@ -291,9 +286,83 @@ Cambio frequenza pagamento
     #    3. mapping tra categoria e funzione da eseguire (la funzione si controlla le info?)
     #
     ############    TODO LIST    ################
-    #return true if ok else false
-    #TODO
-    RETURN    True
+
+    TRY
+        ${frequenza}    Set Variable    ${fields_key_pairs}[frequenza]
+        ${fornitura}    Set Variable    ${fields_key_pairs}[fornitura]
+
+        # TBD
+        # RETURN    True
+    EXCEPT    Dictionary .* has no key 'frequenza'.    type=regexp
+        Log    Missing required field: frequenza
+        #Log To Console    Missing required field: frequenza
+        RETURN    False
+    EXCEPT    Dictionary .* has no key 'fornitura'.    type=regexp
+        Log    Field fornitura not setted, suppose EE and GAS
+        #Log To Console    Field fornitura not setted, suppose EE and GAS
+        ${fornitura}    Set Variable    all
+    EXCEPT
+        Log    Something else went wrong
+        Log To Console    Something else went wrong
+        RETURN    False
+    END
+
+    IF    "${frequenza}" == "scelta"
+        TRY
+            ${mesi_fattura}    Set Variable    ${fields_key_pairs}[mesi]
+            ####################    TO DO    ####################################
+            #
+            #    MANAGE MESI FATTURA, creare dizionario di mapping per
+            #    vedere quali check box selezionare
+            #
+            #####################################################################
+        EXCEPT    Dictionary .* has no key 'mesi'.    type=regexp
+            Log    Missing required field: mesi
+            #Log To Console    Missing required field: mesi
+            RETURN    False
+        END
+    END
+
+    TRY
+        IF    "${fornitura}" == "ee"
+            Open back office EE
+            #filter by CF
+            Select From List By Value    id:filtro_ricerca    CODICE_FISCALE
+            Input Text When Element Is Visible    id:valore_cercato    ${cf}
+            Click Button When Visible    xpath=//*[@id="elencoClienti"]/div/div[1]/input[2]
+            ${xpath_scheda_cliente}    Find cliente corretto    ${cliente}
+            # open scheda cliente
+            Click Link    ${xpath_scheda_cliente}
+            Click Element When Visible    //*[@id="td4"]/span
+            #Find cliente and change email address    ${cf}    ${cliente}    ${email}
+
+            ##################
+            #
+            #    HOW TO PROCEED TO RETURN TO LIST OF ACTIVITY?
+            #    manage close of activity on Manage
+            #
+            ##################
+            RETURN    True
+        ELSE IF    "${fornitura}" == "gas"
+            Open back office GAS
+            Find cliente and change email address    ${cf}    ${cliente}    ${email}
+            ##################
+            #
+            #    HOW TO PROCEED TO RETURN TO LIST OF ACTIVITY?
+            #    manage close of activity on Manage
+            #
+            ##################
+            RETURN    True
+        ELSE
+            Open back office EE
+            Find cliente and change email address    ${cf}    ${cliente}    ${email}
+            Open back office GAS
+            Find cliente and change email address    ${cf}    ${cliente}    ${email}
+        END
+    EXCEPT
+        Log    Something else went wrong
+        RETURN    False
+    END
 
 Modifica anagrafica
     [Arguments]    ${cliente}    ${cf}    ${oggetto}
