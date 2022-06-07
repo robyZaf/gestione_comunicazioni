@@ -335,7 +335,7 @@ Cambio frequenza pagamento
             Click Link    ${xpath_scheda_cliente}
             Click Element When Visible    //*[@id="td4"]/span
 
-            Find contratto in corso di validita
+            ${xpath_contratto_valido}    Find contratto in corso di validita
             #Find cliente and change email address    ${cf}    ${cliente}    ${email}
 
             ##################
@@ -369,7 +369,7 @@ Cambio frequenza pagamento
 Find contratto in corso di validita
     #retrieve inizio e fine validita e check se data di oggi è all'interno
     ${today_date}    Today Dmy
-    FOR    ${contract_row}    IN RANGE    1    ${max_row_to_check_inside_back_office}
+    FOR    ${contract_row}    IN RANGE    1    ${max_row_to_check_inside_back_office}    2
         # Log To Console    number: ${contract_row}
 
         ${inizio_validita_contratto}    RPA.Browser.Selenium.Get Text
@@ -385,18 +385,20 @@ Find contratto in corso di validita
 
         IF    ${contratto_in_corso_validita}
             # return index o xpath to click?
-        ELSE
-            Log    message
-        END
+            RETURN    //*[@id="listaAziende4"]/tbody/tr[${contract_row}]/td[12]/a
+            #ELSE
+            #    Log    message
+            #END
 
-        #${xpath_scheda_cliente}    Set Variable    //*[@id="listaAziendeD"]/tbody/tr[${row_cliente}]/td[1]/a
-        ## take ragione sociale
-        #${ragione_sociale}    RPA.Browser.Selenium.Get Text    ${xpath_scheda_cliente}
-        #IF    "${ragione_sociale}" == "${nome_cliente}"
-        #    RETURN    ${xpath_scheda_cliente}
-        #ELSE
-        #    CONTINUE
-        #END
+            #${xpath_scheda_cliente}    Set Variable    //*[@id="listaAziendeD"]/tbody/tr[${row_cliente}]/td[1]/a
+            ## take ragione sociale
+            #${ragione_sociale}    RPA.Browser.Selenium.Get Text    ${xpath_scheda_cliente}
+            #IF    "${ragione_sociale}" == "${nome_cliente}"
+            #    RETURN    ${xpath_scheda_cliente}
+            #ELSE
+            #    CONTINUE
+            #END
+        END
     END
 
 Modifica anagrafica
