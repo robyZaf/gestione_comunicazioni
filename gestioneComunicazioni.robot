@@ -17,31 +17,14 @@ ${max_row_to_check_inside_back_office}      50
 #...    rid ko
 
 # cambio frequenza pagamento
+@{frequenze_managed}                        mensile    bimestrale    scelta
 &{mapping_frequenza_pagamento_select}=      scelta=0    mensile=1    bimestrale=2
-&{mapping_mesi_id_checkbox}=                gen=GEN
-...                                         feb=FEB
-...                                         mar=MAR
-...                                         apr=APR
-...                                         mag=MAG
-...                                         giu=GIU
-...                                         lug=LUG
-...                                         ago=AGO
-...                                         set=SET
-...                                         ott=OTT
-...                                         nov=NOV
-...                                         dic=DIC
-...                                         gennaio=GEN
-...                                         febbraio=FEB
-...                                         marzo=MAR
-...                                         aprile=APR
-...                                         maggio=MAG
-...                                         giugno=GIU
-...                                         luglio=LUG
-...                                         agosto=AGO
-...                                         settembre=SET
-...                                         ottobre=OTT
-...                                         novembre=NOV
-...                                         dicembre=DIC
+&{mapping_mesi_id_checkbox}=                gen=GEN    feb=FEB    mar=MAR    apr=APR
+...                                         mag=MAG    giu=GIU    lug=LUG    ago=AGO
+...                                         set=SET    ott=OTT    nov=NOV    dic=DIC
+...                                         gennaio=GEN    febbraio=FEB    marzo=MAR    aprile=APR
+...                                         maggio=MAG    giugno=GIU    luglio=LUG    agosto=AGO
+...                                         settembre=SET    ottobre=OTT    novembre=NOV    dicembre=DIC
 
 
 *** Tasks ***
@@ -76,7 +59,6 @@ Put all comunicazioni inside one page
     END
 
 Iterate over comunicazioni and manage
-    # iterate over comunicazioni
     FOR    ${index_comunicazione}    IN RANGE    1    ${activity_number_in_page}
         ${exists_another_comunicazione}    Check if exists another comunicazione    ${index_comunicazione}
         IF    ${exists_another_comunicazione}
@@ -116,26 +98,35 @@ Check if exists another comunicazione
 Manage comunicazione
     [Arguments]    ${index_comunicazione}
 
-    ${categoria}    Retrieve categoria from comunicazione    ${index_comunicazione}
-    Log    Categoria: ${categoria}
-    #Log To Console    id: ${index_comunicazione} Categoria: ${categoria}
+    TRY
+        ${categoria}    Retrieve categoria from comunicazione    ${index_comunicazione}
+        Log    Categoria: ${categoria}
+        #Log To Console    id: ${index_comunicazione} Categoria: ${categoria}
 
-    IF    "${categoria}" == None or len("${categoria}") == 0
-        Log    Categoria cannot be empty.
+        IF    "${categoria}" == None or len("${categoria}") == 0
+            Log    Categoria cannot be empty.
+            RETURN    False
+        END
+
+        List Should Contain Value    ${MANAGED_CATEGORY}    ${categoria}
+
+        ${cliente}    ${cf}    ${oggetto}    Retrieve information from comunicazione
+        ...    ${index_comunicazione}
+        Log    Cliente: ${cliente} CF: ${cf} Oggetto: ${oggetto}
+
+        IF    "${oggetto}" == None or len("${oggetto}") == 0
+            Log    Oggetto cannot be empty.
+            RETURN    False
+        END
+
+        # dictionary with field in oggetto
+        &{fields_key_pairs}    Create dictionary with fields    ${oggetto}
+    EXCEPT    .*does not contain value.*    type=regexp
+        Log    Categoria: ${categoria} is not managed
+        RETURN    False
+    EXCEPT
         RETURN    False
     END
-
-    ${cliente}    ${cf}    ${oggetto}    Retrieve information from comunicazione
-    ...    ${index_comunicazione}
-    Log    Cliente: ${cliente} CF: ${cf} Oggetto: ${oggetto}
-
-    IF    "${oggetto}" == None or len("${oggetto}") == 0
-        Log    Oggetto cannot be empty.
-        RETURN    False
-    END
-
-    # dictionary with field in oggetto
-    &{fields_key_pairs}    Create dictionary with fields    ${oggetto}
 
     ${is_comunicazione_correctly_managed}    Set Variable    False
     IF    "${categoria}" == "cambio mail postalizzazione"
@@ -158,8 +149,6 @@ Manage comunicazione
         ...    ${cliente}
         ...    ${cf}
         ...    &{fields_key_pairs}
-    ELSE
-        Log    Categoria: ${categoria} not managed
     END
     RETURN    ${is_comunicazione_correctly_managed}
 
@@ -210,9 +199,6 @@ Cambio mail postalizzazione
     TRY
         ${email}    Set Variable    ${fields_key_pairs}[email]
         ${fornitura}    Set Variable    ${fields_key_pairs}[fornitura]
-
-        # TBD
-        # RETURN    True
     EXCEPT    Dictionary .* has no key 'email'.    type=regexp
         Log    Missing required field: email
         #Log To Console    Missing required field: email
@@ -231,29 +217,16 @@ Cambio mail postalizzazione
         IF    "${fornitura}" == "ee"
             Open back office EE
             Find cliente and change email address    ${cf}    ${cliente}    ${email}
-            ##################
-            #
-            #    HOW TO PROCEED TO RETURN TO LIST OF ACTIVITY?
-            #    manage close of activity on Manage
-            #
-            ##################
-            RETURN    True
         ELSE IF    "${fornitura}" == "gas"
             Open back office GAS
             Find cliente and change email address    ${cf}    ${cliente}    ${email}
-            ##################
-            #
-            #    HOW TO PROCEED TO RETURN TO LIST OF ACTIVITY?
-            #    manage close of activity on Manage
-            #
-            ##################
-            RETURN    True
         ELSE
             Open back office EE
             Find cliente and change email address    ${cf}    ${cliente}    ${email}
             Open back office GAS
             Find cliente and change email address    ${cf}    ${cliente}    ${email}
         END
+        RETURN    True
     EXCEPT
         Log    Something else went wrong
         RETURN    False
@@ -319,30 +292,30 @@ Cambio frequenza pagamento
         ${frequenza}    Set Variable    ${fields_key_pairs}[frequenza]
         ${fornitura}    Set Variable    ${fields_key_pairs}[fornitura]
 
-        # TBD
-        # RETURN    True
+        List Should Contain Value    ${frequenze_managed}    ${frequenza}
+
+        IF    "${frequenza}" == "scelta"
+            @{mesi_fattura}    Split String    ${fields_key_pairs}[mesi]    ,
+        END
     EXCEPT    Dictionary .* has no key 'frequenza'.    type=regexp
         Log    Missing required field: frequenza
         #Log To Console    Missing required field: frequenza
+        RETURN    False
+    EXCEPT    .*does not contain value.*    type=regexp
+        Log    Frequenza: ${frequenza} is not available
         RETURN    False
     EXCEPT    Dictionary .* has no key 'fornitura'.    type=regexp
         Log    Field fornitura not setted, suppose EE and GAS
         #Log To Console    Field fornitura not setted, suppose EE and GAS
         ${fornitura}    Set Variable    all
+    EXCEPT    Dictionary .* has no key 'mesi'.    type=regexp
+        Log    Missing required field: mesi
+        #Log To Console    Missing required field: mesi
+        RETURN    False
     EXCEPT
         Log    Something else went wrong
         Log To Console    Something else went wrong
         RETURN    False
-    END
-
-    IF    "${frequenza}" == "scelta"
-        TRY
-            @{mesi_fattura}    Split String    ${fields_key_pairs}[mesi]    ,
-        EXCEPT    Dictionary .* has no key 'mesi'.    type=regexp
-            Log    Missing required field: mesi
-            #Log To Console    Missing required field: mesi
-            RETURN    False
-        END
     END
 
     TRY
@@ -358,13 +331,6 @@ Cambio frequenza pagamento
             Click Element When Visible    //*[@id="td4"]/span
 
             Find contratto valido and modifica frequenza    ${frequenza}    ${mesi_fattura}
-
-            ##################
-            #
-            #    HOW TO PROCEED TO RETURN TO LIST OF ACTIVITY?
-            #    manage close of activity on Manage
-            #
-            ##################
             RETURN    True
         ELSE IF    "${fornitura}" == "gas"
             Open back office GAS
