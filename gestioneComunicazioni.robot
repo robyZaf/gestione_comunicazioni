@@ -7,6 +7,7 @@ Library     date_util.py
 
 
 *** Variables ***
+# common variable
 ${activity_number_in_page}                  300
 ${max_row_to_check_inside_back_office}      50
 @{MANAGED_CATEGORY}                         cambio mail postalizzazione
@@ -14,6 +15,33 @@ ${max_row_to_check_inside_back_office}      50
 ...                                         anagrafica
 ...                                         cambio modalita pagamento
 #...    rid ko
+
+# cambio frequenza pagamento
+&{mapping_frequenza_pagamento_select}=      scelta=0    mensile=1    bimestrale=2
+&{mapping_mesi_id_checkbox}=                gen=GEN
+...                                         feb=FEB
+...                                         mar=MAR
+...                                         apr=APR
+...                                         mag=MAG
+...                                         giu=GIU
+...                                         lug=LUG
+...                                         ago=AGO
+...                                         set=SET
+...                                         ott=OTT
+...                                         nov=NOV
+...                                         dic=DIC
+...                                         gennaio=GEN
+...                                         febbraio=FEB
+...                                         marzo=MAR
+...                                         aprile=APR
+...                                         maggio=MAG
+...                                         giugno=GIU
+...                                         luglio=LUG
+...                                         agosto=AGO
+...                                         settembre=SET
+...                                         ottobre=OTT
+...                                         novembre=NOV
+...                                         dicembre=DIC
 
 
 *** Tasks ***
@@ -309,13 +337,7 @@ Cambio frequenza pagamento
 
     IF    "${frequenza}" == "scelta"
         TRY
-            ${mesi_fattura}    Set Variable    ${fields_key_pairs}[mesi]
-            ####################    TO DO    ####################################
-            #
-            #    MANAGE MESI FATTURA, creare dizionario di mapping per
-            #    vedere quali check box selezionare
-            #
-            #####################################################################
+            @{mesi_fattura}    Split String    ${fields_key_pairs}[mesi]    ,
         EXCEPT    Dictionary .* has no key 'mesi'.    type=regexp
             Log    Missing required field: mesi
             #Log To Console    Missing required field: mesi
@@ -335,8 +357,7 @@ Cambio frequenza pagamento
             Click Link    ${xpath_scheda_cliente}
             Click Element When Visible    //*[@id="td4"]/span
 
-            ${xpath_contratto_valido}    Find contratto in corso di validita
-            #Find cliente and change email address    ${cf}    ${cliente}    ${email}
+            Find contratto valido and modifica frequenza    ${frequenza}    ${mesi_fattura}
 
             ##################
             #
@@ -366,7 +387,8 @@ Cambio frequenza pagamento
         RETURN    False
     END
 
-Find contratto in corso di validita
+Find contratto valido and modifica frequenza
+    [Arguments]    ${frequenza}    ${mesi_fattura}
     #retrieve inizio e fine validita e check se data di oggi è all'interno
     ${today_date}    Today Dmy
     FOR    ${contract_row}    IN RANGE    1    ${max_row_to_check_inside_back_office}    2
@@ -384,20 +406,21 @@ Find contratto in corso di validita
         ...    %d/%m/%Y
 
         IF    ${contratto_in_corso_validita}
-            # return index o xpath to click?
-            RETURN    //*[@id="listaAziende4"]/tbody/tr[${contract_row}]/td[12]/a
-            #ELSE
-            #    Log    message
-            #END
+            Click Element When Visible    //*[@id="listaAziende4"]/tbody/tr[${contract_row}]/td[12]/a
+            ${index_row_modifica_contratto}    Evaluate    ${contract_row} + 1
+            Click Element When Visible
+            ...    xpath=/html/body/div[2]/div[5]/div[3]/div/div[2]/div/div[4]/div[4]/table/tbody/tr[${index_row_modifica_contratto}]/td[2]/input[1]
+            Switch Window    new
+            Click Element When Visible    //*[@id="td4"]/span
 
-            #${xpath_scheda_cliente}    Set Variable    //*[@id="listaAziendeD"]/tbody/tr[${row_cliente}]/td[1]/a
-            ## take ragione sociale
-            #${ragione_sociale}    RPA.Browser.Selenium.Get Text    ${xpath_scheda_cliente}
-            #IF    "${ragione_sociale}" == "${nome_cliente}"
-            #    RETURN    ${xpath_scheda_cliente}
-            #ELSE
-            #    CONTINUE
-            #END
+            Select From List By Value    id:ID_FREQUENZA    &{mapping_frequenza_pagamento_select}[${frequenza}]
+            IF    "${frequenza}" == "scelta"
+                FOR    ${mese}    IN    @{mesi_fattura}
+                    Select Checkbox    id:${mese}
+                END
+            END
+            Click Element When Visible    //*[@id="invia"]
+            Switch Window    main
         END
     END
 
