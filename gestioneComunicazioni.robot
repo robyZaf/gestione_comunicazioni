@@ -8,6 +8,8 @@ Library     date_util.py
 
 *** Variables ***
 # common variable
+${energia}                                  ee
+${gas}                                      gas
 ${activity_number_in_page}                  300
 ${max_row_to_check_inside_back_office}      50
 @{MANAGED_CATEGORY}                         cambio mail postalizzazione
@@ -70,6 +72,7 @@ Iterate over comunicazioni and manage
                 #    1. se tutto è andato correttamente chiudere segnalazione
                 #    2. vedere se bisogna ricaricare pagina o fare altro dopo chiusura segnalazione
             ELSE
+                #    vedere se necessario tornare alla pagina iniziale prima di gestire un'altra comunicazione
                 CONTINUE
             END
         ELSE
@@ -330,31 +333,32 @@ Cambio frequenza pagamento
             Click Link    ${xpath_scheda_cliente}
             Click Element When Visible    //*[@id="td4"]/span
 
-            Find contratto valido and modifica frequenza    ${frequenza}    ${mesi_fattura}
-            RETURN    True
+            Find contratto valido and modifica frequenza    ${fornitura}    ${frequenza}    ${mesi_fattura}
         ELSE IF    "${fornitura}" == "gas"
             Open back office GAS
-            Find cliente and change email address    ${cf}    ${cliente}    ${email}
-            ##################
-            #
-            #    HOW TO PROCEED TO RETURN TO LIST OF ACTIVITY?
-            #    manage close of activity on Manage
-            #
-            ##################
-            RETURN    True
+            #filter by CF
+            Select From List By Value    id:filtro_ricerca    CODICE_FISCALE
+            Input Text When Element Is Visible    id:valore_cercato    ${cf}
+            Click Button When Visible    xpath=//*[@id="elencoClienti"]/div/div[1]/input[2]
+            ${xpath_scheda_cliente}    Find cliente corretto    ${cliente}
+            Click Link    ${xpath_scheda_cliente}
+            Click Element When Visible    //*[@id="td4"]/span
+
+            Find contratto valido and modifica frequenza    ${fornitura}    ${frequenza}    ${mesi_fattura}
         ELSE
             Open back office EE
-            Find cliente and change email address    ${cf}    ${cliente}    ${email}
+            Find contratto valido and modifica frequenza    ${energia}    ${frequenza}    ${mesi_fattura}
             Open back office GAS
-            Find cliente and change email address    ${cf}    ${cliente}    ${email}
+            Find contratto valido and modifica frequenza    ${gas}    ${frequenza}    ${mesi_fattura}
         END
+        RETURN    True
     EXCEPT
         Log    Something else went wrong
         RETURN    False
     END
 
 Find contratto valido and modifica frequenza
-    [Arguments]    ${frequenza}    ${mesi_fattura}
+    [Arguments]    ${back_office_type}    ${frequenza}    ${mesi_fattura}
     #retrieve inizio e fine validita e check se data di oggi è all'interno
     ${today_date}    Today Dmy
     FOR    ${contract_row}    IN RANGE    1    ${max_row_to_check_inside_back_office}    2
@@ -374,8 +378,14 @@ Find contratto valido and modifica frequenza
         IF    ${contratto_in_corso_validita}
             Click Element When Visible    //*[@id="listaAziende4"]/tbody/tr[${contract_row}]/td[12]/a
             ${index_row_modifica_contratto}    Evaluate    ${contract_row} + 1
-            Click Element When Visible
-            ...    xpath=/html/body/div[2]/div[5]/div[3]/div/div[2]/div/div[4]/div[4]/table/tbody/tr[${index_row_modifica_contratto}]/td[2]/input[1]
+            IF    "${back_office_type}" == "${energia}"
+                Click Element When Visible
+                ...    xpath=/html/body/div[2]/div[5]/div[3]/div/div[2]/div/div[4]/div[4]/table/tbody/tr[${index_row_modifica_contratto}]/td[2]/input[1]
+            ELSE
+                Click Element When Visible
+                ...    xpath=/html/body/div[2]/div[5]/div[3]/div/div[2]/div/div[4]/div[3]/table/tbody/tr[${index_row_modifica_contratto}]/td[2]/input[1]
+            END
+
             Switch Window    new
             Click Element When Visible    //*[@id="td4"]/span
 
