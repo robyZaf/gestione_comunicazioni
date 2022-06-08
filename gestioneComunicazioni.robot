@@ -3,6 +3,7 @@ Resource    ../common/common.robot
 Library     Collections
 Library     String
 Library     date_util.py
+Library     RPA.Salesforce
 #Library    RPA.Browser.Selenium    auto_close=${FALSE}
 
 
@@ -131,6 +132,14 @@ Manage comunicazione
         RETURN    False
     END
 
+    ############    TODO LIST    ################
+    #    Manage comunicazione    ${categoria}
+    #    1. check sulle informazioni obbligatorie in base alla categoria
+    #    2. se tutte le informazioni sono presenti esegui altrimenti log e continue
+    #    3. mapping tra categoria e funzione da eseguire (la funzione si controlla le info?)
+    #
+    ############    TODO LIST    ################
+
     ${is_comunicazione_correctly_managed}    Set Variable    False
     IF    "${categoria}" == "cambio mail postalizzazione"
         ${is_comunicazione_correctly_managed}    Cambio mail postalizzazione
@@ -189,15 +198,7 @@ Create dictionary with fields
 
 Cambio mail postalizzazione
     [Arguments]    ${cliente}    ${cf}    &{fields_key_pairs}
-    #TODO example object    fornitura:EE email:pippo@example.com
-
-    ############    TODO LIST    ################
-    #    Manage comunicazione    ${categoria}
-    #    1. check sulle informazioni obbligatorie in base alla categoria
-    #    2. se tutte le informazioni sono presenti esegui altrimenti log e continue
-    #    3. mapping tra categoria e funzione da eseguire (la funzione si controlla le info?)
-    #
-    ############    TODO LIST    ################
+    # example object    fornitura:EE email:pippo@example.com
 
     TRY
         ${email}    Set Variable    ${fields_key_pairs}[email]
@@ -217,10 +218,10 @@ Cambio mail postalizzazione
     END
 
     TRY
-        IF    "${fornitura}" == "ee"
+        IF    "${fornitura}" == "${energia}"
             Open back office EE
             Find cliente and change email address    ${cf}    ${cliente}    ${email}
-        ELSE IF    "${fornitura}" == "gas"
+        ELSE IF    "${fornitura}" == "${gas}"
             Open back office GAS
             Find cliente and change email address    ${cf}    ${cliente}    ${email}
         ELSE
@@ -281,15 +282,7 @@ Find cliente corretto
 
 Cambio frequenza pagamento
     [Arguments]    ${cliente}    ${cf}    &{fields_key_pairs}
-    #TODO example object    fornitura:EE frequenza:SCELTA mesi:GEN,MAR,LUG,SET
-
-    ############    TODO LIST    ################
-    #    Manage comunicazione    ${categoria}
-    #    1. check sulle informazioni obbligatorie in base alla categoria
-    #    2. se tutte le informazioni sono presenti esegui altrimenti log e continue
-    #    3. mapping tra categoria e funzione da eseguire (la funzione si controlla le info?)
-    #
-    ############    TODO LIST    ################
+    # example object    fornitura:EE frequenza:SCELTA mesi:GEN,MAR,LUG,SET
 
     TRY
         ${frequenza}    Set Variable    ${fields_key_pairs}[frequenza]
@@ -322,7 +315,7 @@ Cambio frequenza pagamento
     END
 
     TRY
-        IF    "${fornitura}" == "ee"
+        IF    "${fornitura}" == "${energia}"
             Open back office EE
             #filter by CF
             Select From List By Value    id:filtro_ricerca    CODICE_FISCALE
@@ -334,7 +327,7 @@ Cambio frequenza pagamento
             Click Element When Visible    //*[@id="td4"]/span
 
             Find contratto valido and modifica frequenza    ${fornitura}    ${frequenza}    ${mesi_fattura}
-        ELSE IF    "${fornitura}" == "gas"
+        ELSE IF    "${fornitura}" == "${gas}"
             Open back office GAS
             #filter by CF
             Select From List By Value    id:filtro_ricerca    CODICE_FISCALE
@@ -347,8 +340,23 @@ Cambio frequenza pagamento
             Find contratto valido and modifica frequenza    ${fornitura}    ${frequenza}    ${mesi_fattura}
         ELSE
             Open back office EE
+            #filter by CF
+            Select From List By Value    id:filtro_ricerca    CODICE_FISCALE
+            Input Text When Element Is Visible    id:valore_cercato    ${cf}
+            Click Button When Visible    xpath=//*[@id="elencoClienti"]/div/div[1]/input[2]
+            ${xpath_scheda_cliente}    Find cliente corretto    ${cliente}
+            Click Link    ${xpath_scheda_cliente}
+            Click Element When Visible    //*[@id="td4"]/span
             Find contratto valido and modifica frequenza    ${energia}    ${frequenza}    ${mesi_fattura}
+
             Open back office GAS
+            #filter by CF
+            Select From List By Value    id:filtro_ricerca    CODICE_FISCALE
+            Input Text When Element Is Visible    id:valore_cercato    ${cf}
+            Click Button When Visible    xpath=//*[@id="elencoClienti"]/div/div[1]/input[2]
+            ${xpath_scheda_cliente}    Find cliente corretto    ${cliente}
+            Click Link    ${xpath_scheda_cliente}
+            Click Element When Visible    //*[@id="td4"]/span
             Find contratto valido and modifica frequenza    ${gas}    ${frequenza}    ${mesi_fattura}
         END
         RETURN    True
@@ -401,20 +409,98 @@ Find contratto valido and modifica frequenza
     END
 
 Modifica anagrafica
-    [Arguments]    ${cliente}    ${cf}    ${oggetto}
-    #TODO example object    fornitura:EE email:pippo@example.com
-    #    1. check campi obbligatori
-    #    2. if i campi sono ok, prosegui, altrimenti log e return false
-    ############    TODO LIST    ################
-    #    Manage comunicazione    ${categoria}
-    #    1. check sulle informazioni obbligatorie in base alla categoria
-    #    2. se tutte le informazioni sono presenti esegui altrimenti log e continue
-    #    3. mapping tra categoria e funzione da eseguire (la funzione si controlla le info?)
-    #
-    ############    TODO LIST    ################
-    #return true if ok else false
-    #TODO
-    RETURN    True
+    [Arguments]    ${cliente}    ${cf}    ${fields_key_pairs}
+    #TODO example object    fornitura:GAS comune:ROMA indirizzo:VIA VENETO num:23 cap:90465
+
+    #TRY
+    #    ${comune}    Set Variable    ${fields_key_pairs}[comune]
+    #    ${indirizzo}    Set Variable    ${fields_key_pairs}[indirizzo]
+    #    ${fornitura}    Set Variable    ${fields_key_pairs}[fornitura]
+#
+    #    List Should Contain Value    ${frequenze_managed}    ${frequenza}
+#
+    #    IF    "${frequenza}" == "scelta"
+    #    @{mesi_fattura}    Split String    ${fields_key_pairs}[mesi]    ,
+    #    END
+    #EXCEPT    Dictionary .* has no key 'frequenza'.    type=regexp
+    #    Log    Missing required field: frequenza
+    #    #Log To Console    Missing required field: frequenza
+    #    RETURN    False
+    #EXCEPT    .*does not contain value.*    type=regexp
+    #    Log    Frequenza: ${frequenza} is not available
+    #    RETURN    False
+    #EXCEPT    Dictionary .* has no key 'fornitura'.    type=regexp
+    #    Log    Field fornitura not setted, suppose EE and GAS
+    #    #Log To Console    Field fornitura not setted, suppose EE and GAS
+    #    ${fornitura}    Set Variable    all
+    #EXCEPT    Dictionary .* has no key 'mesi'.    type=regexp
+    #    Log    Missing required field: mesi
+    #    #Log To Console    Missing required field: mesi
+    #    RETURN    False
+    #EXCEPT
+    #    Log    Something else went wrong
+    #    Log To Console    Something else went wrong
+    #    RETURN    False
+    #END
+    #RETURN    True
+
+    #####################    Manage comune    ####################
+    TRY
+        IF    "${fornitura}" == "${energia}"
+            Open back office EE
+            #filter by CF
+            Select From List By Value    id:filtro_ricerca    CODICE_FISCALE
+            Input Text When Element Is Visible    id:valore_cercato    ${cf}
+            Click Button When Visible    xpath=//*[@id="elencoClienti"]/div/div[1]/input[2]
+            ${xpath_scheda_cliente}    Find cliente corretto    ${cliente}
+            # open scheda cliente
+            Click Link    ${xpath_scheda_cliente}
+            Click Button When Visible    //*[@id="schedaCliente"]/div/div/input[1]
+            Switch Window    new
+            ${comune_upper}    Convert To Upper Case    ${comune}
+            Input Text When Element Is Visible    id:COMUNE    ${comune_upper}
+            # wait query result
+            Wait Until Element Is Visible    xpath=/html/body/div[5]    timeout=10
+            # cycle to find comune
+            ${index_result}    Set Variable    ${1}
+            ${xpath_list_element}    Set variable    /html/body/div[5]/ul/li[${index_result}]
+            ${exists_another_result}    RPA.Browser.Selenium.Is Element Visible
+            ...    xpath=${xpath_list_element}
+            WHILE    ${exists_another_result}
+                ${current_comune}    RPA.Browser.Selenium.Get Text    xpath=${xpath_list_element}
+                Log To Console    ${current_comune}
+                ${index_result}    Evaluate    ${index_result} + 1
+                ${xpath_list_element}    Set variable    /html/body/div[5]/ul/li[${index_result}]
+                ${exists_another_result}    RPA.Browser.Selenium.Is Element Visible
+                ...    xpath=${xpath_list_element}
+            END
+            # modifica dati cliente
+            #### TODO
+        ELSE IF    "${fornitura}" == "${gas}"
+            Open back office GAS
+            #filter by CF
+
+            # modifica dati cliente
+            #### TODO
+        ELSE
+            Open back office EE
+            #filter by CF
+
+            # modifica dati cliente
+            #### TODO
+
+            Open back office GAS
+            #filter by CF
+
+            # modifica dati cliente
+            #### TODO
+        END
+        RETURN    True
+    EXCEPT
+        Log    Something else went wrong
+        RETURN    False
+    END
+    ##############################################################
 
 Cambio modalita pagamento
     [Arguments]    ${cliente}    ${cf}    ${oggetto}
