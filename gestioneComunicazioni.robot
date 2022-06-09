@@ -461,14 +461,25 @@ Modifica anagrafica
             Input Text When Element Is Visible    id:COMUNE    ${comune_upper}
             # wait query result
             Wait Until Element Is Visible    xpath=/html/body/div[5]    timeout=10
-            # cycle to find comune
+            # cycle to find comune corretto
+            ${regex_to_extract_comune}    Set Variable    (.*)\\s\\(\\w{2}\\)
             ${index_result}    Set Variable    ${1}
             ${xpath_list_element}    Set variable    /html/body/div[5]/ul/li[${index_result}]
             ${exists_another_result}    RPA.Browser.Selenium.Is Element Visible
             ...    xpath=${xpath_list_element}
             WHILE    ${exists_another_result}
                 ${current_comune}    RPA.Browser.Selenium.Get Text    xpath=${xpath_list_element}
-                Log To Console    ${current_comune}
+                ${group_match_comune}    Get Regexp Matches
+                ...    ${current_comune}
+                ...    ${regex_to_extract_comune}
+                ...    1
+                ${comune_without_provincia}    Set Variable    ${group_match_comune}[0]
+                #Log To Console    ${comune_without_provincia}
+                IF    "${comune_without_provincia}" == "${comune_upper}"
+                    Click Element If Visible    xpath=${xpath_list_element}
+                    BREAK
+                END
+                # increase variable for next step
                 ${index_result}    Evaluate    ${index_result} + 1
                 ${xpath_list_element}    Set variable    /html/body/div[5]/ul/li[${index_result}]
                 ${exists_another_result}    RPA.Browser.Selenium.Is Element Visible
