@@ -485,6 +485,16 @@ Modifica anagrafica
                 ${exists_another_result}    RPA.Browser.Selenium.Is Element Visible
                 ...    xpath=${xpath_list_element}
             END
+
+            # inserimento indirizzo e civico come testi normali
+            Input Text When Element Is Visible    id:INDIRIZZO    ${indirizzo}
+            Input Text When Element Is Visible    id:CIVICO    ${civico}
+
+            # considerare il cap per un confronto?
+
+            Click Button When Visible    id:button_salva
+            Switch Window    main
+
             # modifica dati cliente
             #### TODO
         ELSE IF    "${fornitura}" == "${gas}"
